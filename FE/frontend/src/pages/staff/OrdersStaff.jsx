@@ -14,6 +14,9 @@ const OrdersStaff = () => {
   const [updatingStatus, setUpdatingStatus] = useState({});
   const [selectedStatus, setSelectedStatus] = useState({});
 
+  // ✅ Thêm state cho filter theo kiểu nhận hàng
+  const [deliveryFilter, setDeliveryFilter] = useState('all'); // 'all', 'delivery', 'pickup'
+
   useEffect(() => {
     const getProducts = async () => {
       setLoading(true);
@@ -25,13 +28,26 @@ const OrdersStaff = () => {
     getProducts();
   }, [fetchBranchOrdersByStaff]);
 
+  // ✅ Hàm filter đơn hàng theo kiểu nhận hàng
+  const filteredOrders = orderUserList.filter(order => {
+    if (deliveryFilter === 'all') return true;
+    return order.getOrderMethod?.toLowerCase() === deliveryFilter;
+  });
+
+  // ✅ Thống kê số lượng đơn hàng
+  const orderStats = {
+    all: orderUserList.length,
+    delivery: orderUserList.filter(order => order.getOrderMethod?.toLowerCase() === 'delivery').length,
+    pickup: orderUserList.filter(order => order.getOrderMethod?.toLowerCase() === 'pickup').length
+  };
+
   // ✅ Hàm update status
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
       setUpdatingStatus(prev => ({ ...prev, [orderId]: true }));
       console.log('Updating status for order:', orderId, 'to', newStatus);
       const updatedOrder = await updateOrderStatus(orderId, newStatus);
-      
+
       if (updatedOrder) {
         // Cập nhật state local
         setOrderUserList(prev =>
@@ -41,7 +57,7 @@ const OrdersStaff = () => {
               : order
           )
         );
-        
+
         // Reset selected status
         setSelectedStatus(prev => ({ ...prev, [orderId]: '' }));
       }
@@ -164,21 +180,76 @@ const OrdersStaff = () => {
         <Title text1={'ĐƠN HÀNG'} text2={'CHI NHÁNH'} />
       </div>
 
-      {orderUserList.length === 0 ? (
-        <div className='flex justify-center items-center py-8'>
-          <p className='text-gray-500'>Bạn chưa có đơn hàng nào.</p>
+      {/* ✅ Filter Tabs */}
+      <div className='mb-6'>
+        <div className='flex flex-wrap gap-2 mb-4 bg-white rounded-lg border p-4'>
+          <button
+            onClick={() => setDeliveryFilter('all')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${deliveryFilter === 'all'
+              ? 'bg-blue-500 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-200'
+              }`}
+          >
+            Tất cả ({orderStats.all})
+          </button>
+
+          <button
+            onClick={() => setDeliveryFilter('delivery')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${deliveryFilter === 'delivery'
+              ? 'bg-blue-500 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-200'
+              }`}
+          >
+            Giao tận nơi ({orderStats.delivery})
+          </button>
+
+          <button
+            onClick={() => setDeliveryFilter('pickup')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${deliveryFilter === 'pickup'
+              ? 'bg-blue-500 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-200'
+              }`}
+          >
+            Nhận tại cửa hàng ({orderStats.pickup})
+          </button>
+        </div>
+
+        {/* ✅ Filter Summary */}
+        <div className='text-sm text-gray-600'>
+          {deliveryFilter === 'all' && `Hiển thị ${filteredOrders.length} đơn hàng`}
+          {deliveryFilter === 'delivery' && `Hiển thị ${filteredOrders.length} đơn giao tận nơi`}
+          {deliveryFilter === 'pickup' && `Hiển thị ${filteredOrders.length} đơn nhận tại cửa hàng`}
+        </div>
+      </div>
+
+      {filteredOrders.length === 0 ? (
+        <div className='flex flex-col justify-center items-center py-8'>
+          <div className='text-gray-400 text-6xl mb-4'>
+            {deliveryFilter === 'delivery' ? '🚚' : deliveryFilter === 'pickup' ? '🏪' : '📦'}
+          </div>
+          <p className='text-gray-500'>
+            {deliveryFilter === 'all' && 'Bạn chưa có đơn hàng nào.'}
+            {deliveryFilter === 'delivery' && 'Không có đơn hàng giao tận nơi.'}
+            {deliveryFilter === 'pickup' && 'Không có đơn hàng nhận tại cửa hàng.'}
+          </p>
         </div>
       ) : (
         <div className='space-y-6'>
-          {orderUserList.map((order) => (
+          {filteredOrders.map((order) => (
             <div key={order.orderId} className='border rounded-lg p-6 bg-white shadow-sm'>
               {/* Order Header */}
               <div className='flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 pb-4 border-b'>
                 <div className='flex-1'>
-                  <h3 className='text-lg font-medium text-gray-800'>
-                    Đơn hàng #{order.orderId}
-                  </h3>
-                  <p className='text-sm text-gray-600 mt-1'>
+                  <div className='flex items-center gap-3 mb-2'>
+                    <h3 className='text-lg font-medium text-gray-800'>
+                      Đơn hàng #{order.orderId}
+                    </h3>
+                    {/* ✅ Simplified badge - chỉ dùng gray theme */}
+                    <span className='px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700'>
+                      {order.getOrderMethod?.toLowerCase() === 'delivery' ? '🚚 Giao hàng' : '🏪 Nhận tại shop'}
+                    </span>
+                  </div>
+                  <p className='text-sm text-gray-600'>
                     Ngày đặt: {formatDate(order.orderDate)}
                   </p>
                 </div>
@@ -201,7 +272,20 @@ const OrdersStaff = () => {
                     >
                       <option value="">Chọn trạng thái mới</option>
                       {statusOptions
-                        .filter(option => option.value.toLowerCase() !== order.status?.toLowerCase())
+                        .filter(option => {
+                          // ✅ Loại bỏ trạng thái hiện tại
+                          if (option.value.toLowerCase() === order.status?.toLowerCase()) {
+                            return false;
+                          }
+
+                          // ✅ Nếu là đơn pickup, loại bỏ trạng thái "Shipped"
+                          if (order.getOrderMethod?.toLowerCase() === 'pickup' &&
+                            option.value.toLowerCase() === 'shipped') {
+                            return false;
+                          }
+
+                          return true;
+                        })
                         .map(option => (
                           <option key={option.value} value={option.value}>
                             {option.label}
@@ -270,7 +354,7 @@ const OrdersStaff = () => {
                 </div>
               </div>
 
-              {/* Order Items - Chỉ hiển thị khi đã fetch và show = true */}
+              {/* ✅ Existing Order Items section remains the same */}
               {orderDetails[order.orderId]?.show && orderDetails[order.orderId]?.data && (
                 <div className='border-t pt-4'>
                   <h4 className='font-medium text-gray-800 mb-3'>Chi tiết sản phẩm:</h4>
@@ -307,4 +391,4 @@ const OrdersStaff = () => {
   );
 };
 
-export default OrdersStaff
+export default OrdersStaff;

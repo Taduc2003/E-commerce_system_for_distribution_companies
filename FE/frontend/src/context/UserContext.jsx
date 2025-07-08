@@ -18,12 +18,12 @@ const UserProvider = ({ children }) => {
             localStorage.setItem('userId', res.data.userId);
 
             setUser(res.data.user);
+            
             return res.data;
         } catch {
             return null;
         }
     };
-
     // Đăng xuất (AuthController)
     const logout = async () => {
         try {
@@ -79,6 +79,7 @@ const UserProvider = ({ children }) => {
             const res = await axios.get(`/api/staff/${staffId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            console.log("Staff data:", res.data);
             setStaff(res.data);
             return res.data;
         } catch {
@@ -251,6 +252,13 @@ const UserProvider = ({ children }) => {
         fetchCurrentUser();
         // eslint-disable-next-line
     }, [token]);
+
+    useEffect(() => {
+        if (user && (user.role.roleName === 'STAFF' || user.role.roleName === 'SHIPPER')) {
+            fetchStaffById(user.userId);
+        }
+        // eslint-disable-next-line
+    }, [user]);
 
     return (
         <UserContext.Provider

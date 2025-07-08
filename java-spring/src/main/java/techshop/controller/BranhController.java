@@ -14,6 +14,7 @@ import org.springframework.web.service.annotation.PutExchange;
 
 import techshop.service.BranchService;
 import techshop.domain.Branch;
+import techshop.domain.Inventory;
 import techshop.dto.BranchDTO;
 import java.util.List;
 
@@ -22,6 +23,7 @@ import java.util.List;
 public class BranhController {
 
     private final BranchService branchService;
+
     public BranhController(BranchService branchService) {
         this.branchService = branchService;
     }
@@ -32,10 +34,10 @@ public class BranhController {
     }
 
     @GetMapping("/{branch_id}")
-    public ResponseEntity<Branch> getBranchById(@PathVariable("branch_id") long branchId) {
-        Branch branch = this.branchService.getBranchById(branchId);
-        if (branch != null) {
-            return ResponseEntity.ok(branch);
+    public ResponseEntity<BranchDTO> getBranchById(@PathVariable("branch_id") long branchId) {
+        BranchDTO branchDTO = this.branchService.getBranchById(branchId);
+        if (branchDTO != null) {
+            return ResponseEntity.ok(branchDTO);
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -67,5 +69,28 @@ public class BranhController {
         }
     }
 
+    // Update inventory for a branch
+    @PostMapping("/inventory/{branch_id}/update")
+    public ResponseEntity<List<Inventory>> updateInventory(@PathVariable("branch_id") long branchId,
+            @RequestBody List<Inventory> inventoryUpdates) {
+        boolean isUpdated = this.branchService.updateInventory(branchId, inventoryUpdates);
+        if (isUpdated) {
+            return ResponseEntity.ok(inventoryUpdates);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // ✅ Thêm endpoint update inventory cho 1 item cụ thể
+    @PutMapping("/inventory/{inventoryId}")
+    public ResponseEntity<Inventory> updateSingleInventory(@PathVariable("inventoryId") long inventoryId,
+            @RequestBody Inventory inventory) {
+        Inventory updatedInventory = this.branchService.updateSingleInventory(inventoryId, inventory);
+        if (updatedInventory != null) {
+            return ResponseEntity.ok(updatedInventory);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
 }

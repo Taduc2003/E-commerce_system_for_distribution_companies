@@ -101,24 +101,137 @@ export const ProductProvider = ({ children }) => {
         }
     };
 
+    // ✅ Đảm bảo fetchAllBranches return data
     const fetchAllBranches = async () => {
         try {
             const res = await axios.get('/api/branch', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setBranches(res.data);
-            console.log('Branches fetched:', res.data);
+            console.log('Fetched branches:', res.data); // ✅ Debug log
             return res.data;
-        } catch {
+        } catch (error) {
+            console.error('Error fetching branches:', error);
             setBranches([]);
             return [];
         }
     };
 
-    
+    const fetchBranchById = async (branchId) => {
+        try {
+            const res = await axios.get(`/api/branch/${branchId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            console.log('Fetched branch:', res.data);
+            return res.data;
+        } catch (error) {
+            console.error('Error fetching branch by ID:', error);
+            return null;
+        }
+    };
+
+    // ✅ Thêm function update inventory
+    const updateInventoryQuantity = async (inventoryId, newQuantity) => {
+        try {
+            const payload = {
+                inventoryId: inventoryId,
+                quantity: newQuantity
+            };
+
+            const res = await axios.put(`/api/branch/inventory/${inventoryId}`, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            console.log('Updated inventory:', res.data);
+            return res.data;
+        } catch (error) {
+            console.error('Error updating inventory:', error);
+            return null;
+        }
+    };
+
+    // ✅ Thêm function update branch
+    const updateBranch = async (branchId, branchData) => {
+        try {
+            const payload = {
+                address: branchData.address,
+                phone: branchData.phone
+            };
+
+            const res = await axios.put(`/api/branch/${branchId}`, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            console.log('Updated branch:', res.data);
+
+            // ✅ Cập nhật local state branches nếu cần
+            setBranches(prev =>
+                prev.map(branch =>
+                    branch.branchId === branchId
+                        ? { ...branch, ...branchData }
+                        : branch
+                )
+            );
+
+            return res.data;
+        } catch (error) {
+            console.error('Error updating branch:', error);
+            return null;
+        }
+    };
+
+    // ✅ Thêm function create branch
+    const createBranch = async (branchData) => {
+        try {
+            const payload = {
+                address: branchData.address,
+                phone: branchData.phone
+            };
+
+            const res = await axios.post('/api/branch', payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            console.log('Created branch:', res.data);
+
+            // ✅ Refresh danh sách branches
+            await fetchAllBranches();
+
+            return res.data;
+        } catch (error) {
+            console.error('Error creating branch:', error);
+            return null;
+        }
+    };
+
+    // ✅ Thêm function delete branch
+    const deleteBranch = async (branchId) => {
+        try {
+            const res = await axios.delete(`/api/branch/${branchId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            console.log('Deleted branch:', branchId);
+
+            // ✅ Cập nhật local state
+            setBranches(prev => prev.filter(branch => branch.branchId !== branchId));
+
+            return true;
+        } catch (error) {
+            console.error('Error deleting branch:', error);
+            return false;
+        }
+    };
 
     useEffect(() => {
-        fetchAllBranches(); 
+        fetchAllBranches();
     }, [token]);
 
     return (
@@ -131,6 +244,11 @@ export const ProductProvider = ({ children }) => {
                 deleteProduct,
                 uploadImage,
                 fetchAllBranches,
+                fetchBranchById,
+                updateInventoryQuantity,
+                updateBranch,        // ✅ Thêm function mới
+                createBranch,        // ✅ Thêm function mới
+                deleteBranch,        // ✅ Thêm function mới
                 branches,
             }}
         >

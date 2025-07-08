@@ -23,8 +23,8 @@ import Inventory from './pages/staff/Inventory';
 import LayoutShipper from './layout/LayoutShipper';
 import OrderShipper from './pages/shipper/OrderShipper';
 import Report from './pages/admin/Report';
-import ProfileStaff from './pages/staff/ProfileStaff';
-import Profile from './pages/user/Profile';
+import Profile from './pages/Profile';
+import Branch from './pages/admin/Branch';
 
 
 const App = () => {
@@ -41,7 +41,7 @@ const App = () => {
           <Route path='/login' element={<Login />} />
           <Route path='/place-order' element={<PlaceOrder />} />
           <Route path='/orders' element={<Orders />} />
-          <Route path='/profile' element={<Profile />} />
+          <Route path='/profile' element={<Profile/>} />
         </Route>
 
 
@@ -51,7 +51,7 @@ const App = () => {
           <Route path='employees' element={<Employees />} />
           <Route path='report' element={<Report />} />
           <Route path='profile' element={<Profile />} />
-          <Route path='branches' element={<div>Branches Page</div>} />
+          <Route path='branches' element={<Branch />} />
           <Route path='inventory/:branchId' element={<Inventory />} />
 
         </Route>
@@ -62,12 +62,13 @@ const App = () => {
           <Route path='discounts' element={<Discount />} />
           <Route path='orders' element={<OrdersStaff />} />
           <Route path='inventory/:branchId' element={<Inventory />} />
-          <Route path='profile' element={<ProfileStaff />} />
+          <Route path='profile' element={<Profile/>} />
         </Route>
 
         {/* Shipper layout */}
         <Route path='/shipper' element={<LayoutShipper />}>
           <Route path='orders' element={<OrdersStaff />} />
+          <Route path='profile' element={<Profile/>} />
         </Route>
       </Routes>
     </div>
